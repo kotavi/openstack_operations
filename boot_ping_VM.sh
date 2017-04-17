@@ -1,6 +1,8 @@
 #!/bin/bash -x
 # for ssh part
 # apt-get install sshpass
+# for opanstack commands
+# source openrc
 
 
 flavor_id=1
