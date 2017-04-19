@@ -1,8 +1,27 @@
-#!/bin/bash -x
-# for ssh part
-# apt-get install sshpass
-# for opanstack commands
-# source openrc
+#!/bin/bash +x
+# for Linux OS only
+
+openrc_path=$1
+
+if [[ -n "$openrc_path" && -e $openrc_path ]] ; then
+    source $openrc_path
+else
+    echo "Please provide correct path to openrc"
+    exit 1
+fi
+
+if $(pip freeze | grep sshpass); then
+    echo "Package sshpass is already installed"
+    continue
+else
+    echo "Do you want to install sshpass package? (Y/N)"
+    read answer
+    if [ $answer == "Y" ]; then
+        apt-get install sshpass
+    else
+        echo "Package sshpass will NOT be installed."
+    fi
+fi
 
 
 flavor_id=1
@@ -22,7 +41,7 @@ if [ -z "$internalip" ]; then
    nova delete $VM_id
    exit
 fi
-	
+
 floatingip=$(neutron floatingip-create $floating_net | grep ' floating_ip_address ' | awk '{print$4}' )
 
 nova floating-ip-associate --fixed-address $internalip $VM_id $floatingip
@@ -31,7 +50,7 @@ sleep 10
 nova show $VM_id
 
 ping $floatingip
-ssh_to_VM() { 
+ssh_to_VM() {
 	sleep 5
 	sshpass -p "cubswin:)" ssh -o StrictHostKeyChecking=no cirros@$floatingip hostname 2>&1
 }
