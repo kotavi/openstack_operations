@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-#./launch_VM_from_volumesnapshot.sh -openrc=openrc -i=TestVM -u=ubuntu -f=2 -v_s=2 -v_t=netapp
+#./boot_VM_from_volume_from_snap.sh -openrc=openrc -i=TestVM -u=ubuntu -f=2 -v_s=2 -v_t=netapp
 
 #create volume from image
 #launch VM from volume
@@ -76,10 +76,10 @@ for i in $(seq 1 $active_check_tries)
 do
   result="$(nova show $VM_temp_id 2>&1)"
   VM1_status=$(echo "$result" | grep "^| *status" | awk '{printf $4}')
-  [ "$VM_temp_id" == "ACTIVE" ] && break
+  [ "$VM1_status" == "ACTIVE" ] && break
   [ $i -lt $active_check_tries ] && sleep $active_check_delay
 done
-if ! [ "$VM_temp_id" == "ACTIVE" ]
+if ! [ "$VM1_status" == "ACTIVE" ]
 then
   echo "timeout waiting for second VM to become active" "$result"
   exit
