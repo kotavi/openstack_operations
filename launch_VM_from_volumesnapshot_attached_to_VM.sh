@@ -1,12 +1,44 @@
 #!/bin/bash -x
 #!/bin/bash -x
 # for Linux OS only
+#
+#openrc_path=$1
+#image_name=$2
+#user=$3
+#flavor_id=$4
+#volume_size=$5
+#volume_type=netapp
 
-openrc_path=$1
-image_name=$2
-user=$3
-flavor_id=$4
-volume_size=$5
+#./launch_VM_from_volumesnapshot.sh -openrc=openrc -i=TestVM -u=ubuntu -f=2 -v_s=2 -v_t=netapp
+
+
+for i in "$@"
+do
+case $i in
+    -openrc=*)
+    openrc_path="${i#*=}"
+    ;;
+    -i=*|--image_name=*)
+    image_name="${i#*=}"
+    ;;
+    -u=*|--user=*)
+    user="${i#*=}"
+    ;;
+    -f=*|--flavor_id=*)
+    flavor_id="${i#*=}"
+    ;;
+    -v_s=*|--volume_size=*)
+    volume_size="${i#*=}"
+    ;;
+    -v_t=*|--volume_type=*)
+    volume_type="${i#*=}"
+    ;;
+    *)
+
+    ;;
+esac
+done
+
 
 if [[ -n "$openrc_path" && -e $openrc_path ]] ; then
     source $openrc_path
@@ -16,7 +48,6 @@ else
 fi
 
 floating_net=admin_floating_net
-volume_type=netapp
 active_check_tries=10
 active_check_delay=10
 
