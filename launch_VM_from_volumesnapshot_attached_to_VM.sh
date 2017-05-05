@@ -65,6 +65,7 @@ do
   result="$(openstack volume show $volume_id 2>&1)"
   volume_status=$(echo "$result" | grep "^| *status" | awk '{printf $4}')
   [ "$volume_status" == "available" ] && break
+  [ "$volume_status" == "error" ] && echo "volume is in error state" && break
   [ $i -lt $active_check_tries ] && sleep $active_check_delay
 done
 if ! [ "$volume_status" == "available" ]
@@ -93,6 +94,7 @@ do
   result="$(openstack snapshot show $snapshot_id 2>&1)"
   snapshot_status=$(echo "$result" | grep "^| *status" | awk '{printf $4}')
   [ "$snapshot_status" == "available" ] && break
+  [ "$snapshot_status" == "error" ] && echo "snapshot is in error state" && break
   [ $i -lt $active_check_tries ] && sleep $active_check_delay
 done
 if ! [ "$snapshot_status" == "available" ]

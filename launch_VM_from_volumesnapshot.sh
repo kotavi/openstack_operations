@@ -46,6 +46,17 @@ else
     exit 1
 fi
 
+clear_data(){
+        nova floating-ip-disassociate $VM_id $floatingip
+        nova floating-ip-delete $floatingip
+        nova floating-ip-list
+        nova delete $VM_id
+        nova list
+        openstack snapshot delete $snapshot_id
+        openstack volume delete $volume_id
+
+}
+
 floating_net=admin_floating_net
 active_check_tries=10
 active_check_delay=10
@@ -64,6 +75,7 @@ do
   result="$(openstack volume show $volume_id 2>&1)"
   volume_status=$(echo "$result" | grep "^| *status" | awk '{printf $4}')
   [ "$volume_status" == "available" ] && break
+  [ "$volume_status" == "error" ] && echo "volume is in error state" && clear_data && break
   [ $i -lt $active_check_tries ] && sleep $active_check_delay
 done
 if ! [ "$volume_status" == "available" ]
@@ -78,6 +90,7 @@ do
   result="$(openstack snapshot show $snapshot_id 2>&1)"
   snapshot_status=$(echo "$result" | grep "^| *status" | awk '{printf $4}')
   [ "$snapshot_status" == "available" ] && break
+  [ "$snapshot_status" == "error" ] && echo "snapshot is in error state" && clear_data && break
   [ $i -lt $active_check_tries ] && sleep $active_check_delay
 done
 if ! [ "$snapshot_status" == "available" ]
@@ -97,6 +110,7 @@ do
   result="$(nova show $VM_id 2>&1)"
   VM_status=$(echo "$result" | grep "^| *status" | awk '{printf $4}')
   [ "$VM_status" == "ACTIVE" ] && break
+  [ "$VM_status" == "error" ] && echo "VM is in error state" && clear_data && break
   [ $i -lt $active_check_tries ] && sleep $active_check_delay
 done
 if ! [ "$VM_status" == "ACTIVE" ]
@@ -120,17 +134,6 @@ ssh_to_VM() {
         sleep 5
         ssh-keygen -R $floatingip
         ssh -i "temporary-keypair" -o StrictHostKeyChecking=no $user@$floatingip hostname 2>&1
-}
-
-clear_data(){
-        nova floating-ip-disassociate $VM_id $floatingip
-        nova floating-ip-delete $floatingip
-        nova floating-ip-list
-        nova delete $VM_id
-        nova list
-        openstack snapshot delete $snapshot_id
-        openstack volume delete $volume_id
-
 }
 
 ssh_to_VM
