@@ -1,16 +1,13 @@
 #!/bin/bash -x
-#!/bin/bash -x
-# for Linux OS only
+
+#./launch_VM_from_volumesnapshot.sh -openrc=openrc -i=TestVM -u=ubuntu -f=2 -v_s=2 -v_t=netapp
 
 #create volume from image
 #launch VM from volume
 #create snapshot from volume
+#create volume from snapshot
 #create keypair
 #launch VM from snapshot with keypair  and get hostname of VM
-
-
-#./launch_VM_from_volumesnapshot.sh -openrc=openrc -i=TestVM -u=ubuntu -f=2 -v_s=2 -v_t=netapp
-
 
 for i in "$@"
 do
@@ -102,6 +99,24 @@ then
   echo "timeout waiting for snapshot to become available" "$result"
   exit
 fi
+
+#-------
+echo "Create volume from snapshot"
+volume_id=$(openstack volume create --snapshot $snapshot_id --size $volume_size --type $volume_type $volume_name | grep ' id ' | awk '{print $4}')
+for i in $(seq 1 $active_check_tries)
+do
+  result="$(openstack volume show $volume_id 2>&1)"
+  volume_status=$(echo "$result" | grep "^| *status" | awk '{printf $4}')
+  [ "$volume_status" == "available" ] && break
+  [ "$volume_status" == "error" ] && echo "volume is in error state" && break
+  [ $i -lt $active_check_tries ] && sleep $active_check_delay
+done
+if ! [ "$volume_status" == "available" ]
+then
+  echo "timeout waiting for volume to become available" "$result"
+  exit
+fi
+
 
 # create keypair
 keypair_name=$(cat /dev/urandom | tr -dc 'a-z' | fold -w 10 | head -n 1)

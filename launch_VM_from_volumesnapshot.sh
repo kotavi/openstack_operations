@@ -1,12 +1,11 @@
 #!/bin/bash -x
-# for Linux OS only
-#
-#openrc_path=$1
-#image_name=$2
-#user=$3
-#flavor_id=$4
-#volume_size=$5
-#volume_type=netapp
+
+
+#create volume from image
+#create snapshot from volume
+#create keypair
+#launch VM from snapshot with keypair  and get hostname of VM
+
 
 #./launch_VM_from_volumesnapshot.sh -openrc=openrc -i=TestVM -u=ubuntu -f=2 -v_s=2 -v_t=netapp
 
