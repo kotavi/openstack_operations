@@ -75,7 +75,12 @@ do
   result="$(openstack volume show $volume_id 2>&1)"
   volume_status=$(echo "$result" | grep "^| *status" | awk '{printf $4}')
   [ "$volume_status" == "available" ] && break
-  [ "$volume_status" == "error" ] && echo "volume is in error state" && clear_data && break
+  if [ "$volume_status" == "error" ]
+  then
+    echo "volume is in error state"
+    clear_data
+    exit 1
+  fi
   [ $i -lt $active_check_tries ] && sleep $active_check_delay
 done
 if ! [ "$volume_status" == "available" ]
@@ -90,7 +95,12 @@ do
   result="$(openstack snapshot show $snapshot_id 2>&1)"
   snapshot_status=$(echo "$result" | grep "^| *status" | awk '{printf $4}')
   [ "$snapshot_status" == "available" ] && break
-  [ "$snapshot_status" == "error" ] && echo "snapshot is in error state" && clear_data && break
+  if [ "$snapshot_status" == "error" ]
+  then
+    echo "snapshot is in error state"
+    clear_data
+    exit 1
+  fi
   [ $i -lt $active_check_tries ] && sleep $active_check_delay
 done
 if ! [ "$snapshot_status" == "available" ]
@@ -110,7 +120,12 @@ do
   result="$(nova show $VM_id 2>&1)"
   VM_status=$(echo "$result" | grep "^| *status" | awk '{printf $4}')
   [ "$VM_status" == "ACTIVE" ] && break
-  [ "$VM_status" == "error" ] && echo "VM is in error state" && clear_data && break
+  if [ "$VM_status" == "error" ]
+  then
+    echo "VM is in error state"
+    clear_data
+    exit 1
+  fi
   [ $i -lt $active_check_tries ] && sleep $active_check_delay
 done
 if ! [ "$VM_status" == "ACTIVE" ]
