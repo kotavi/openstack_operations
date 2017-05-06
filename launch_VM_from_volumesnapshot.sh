@@ -7,8 +7,11 @@
 #launch VM from snapshot with keypair  and get hostname of VM
 
 
-#./launch_VM_from_volumesnapshot.sh -openrc=openrc -i=TestVM -u=ubuntu -f=2 -v_s=2 -v_t=netapp
+#./launch_VM_from_volumesnapshot.sh -openrc=openrc -i=TestVM -u=cirros -f=2 -v_s=2 -v_t=netapp
 
+floating_net=admin_floating_net
+active_check_tries=20
+active_check_delay=10
 
 for i in "$@"
 do
@@ -53,16 +56,14 @@ clear_data(){
         nova list
         openstack snapshot delete $snapshot_id
         openstack volume delete $volume_id
-
+        openstack volume delete $new_volume_id
+        openstack keypair delete $keypair_name
 }
 
-floating_net=admin_floating_net
-active_check_tries=10
-active_check_delay=10
-
-VM_name=$(cat /dev/urandom | tr -dc 'a-z' | fold -w 10 | head -n 1)
-volume_name=$(cat /dev/urandom | tr -dc 'a-z' | fold -w 10 | head -n 1)
-snapshot_name=$(cat /dev/urandom | tr -dc 'a-z' | fold -w 10 | head -n 1)
+random=$(cat /dev/urandom | tr -dc 'a-z' | fold -w 10 | head -n 1)
+VM_name=$random"_VM"
+volume_name=$random"_volume"
+snapshot_name=$random"_snapshot"
 
 security_group_id=$(nova secgroup-list | grep default | awk '{print$2}')
 admin_internal_net=$(neutron net-list | grep admin_internal_net | awk '{print$2}')
@@ -118,7 +119,9 @@ then
   exit
 fi
 
-new_volume_id=$(nova show $VM_id | grep "os-extended-volumes:volumes_attached" | awk '{print $5}')
+new_volume=$(nova show $VM_id | grep "os-extended-volumes:volumes_attached")
+new_volume_id=$(echo "$new_volume" | awk -F'"' '{print $4}')
+
 internalip=$(nova show $VM_id | grep admin_internal_net | awk '{print$5}')
 
 floatingip=$(neutron floatingip-create $floating_net | grep ' floating_ip_address ' | awk '{print$4}' )
