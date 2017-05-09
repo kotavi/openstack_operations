@@ -11,6 +11,7 @@
 
 #./launch_VM_from_volumesnapshot_attached_to_VM.sh -openrc=openrc -i=TestVM -u=cirros -f=2 -v_s=2 -v_t=netapp
 
+
 floating_net=admin_floating_net
 active_check_tries=10
 active_check_delay=10

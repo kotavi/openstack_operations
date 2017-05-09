@@ -4,11 +4,9 @@
 #launch VM from volume
 #create snapshot from volume
 #create volume from snapshot
-#create keypair
-#launch VM from snapshot with keypair  and get hostname of VM
 
 
-#./boot_VM_from_volume_from_snap.sh -openrc=openrc -i=TestVM -u=cirros -f=2 -v_s=2 -v_t=netapp
+#./2_create_volume_from_snap.sh -openrc=openrc -i=TestVM -f=2 -v_s=2 -v_t=netapp
 
 
 floating_net=admin_floating_net
@@ -24,9 +22,6 @@ case $i in
     -i=*|--image_name=*)
     image_name="${i#*=}"
     ;;
-    -u=*|--user=*)
-    user="${i#*=}"
-    ;;
     -f=*|--flavor_id=*)
     flavor_id="${i#*=}"
     ;;
@@ -37,10 +32,15 @@ case $i in
     volume_type="${i#*=}"
     ;;
     *)
-
     ;;
 esac
 done
+
+echo $openrc_path
+echo $image_name
+echo $flavor_id
+echo $volume_size
+echo $volume_type
 
 
 if [[ -n "$openrc_path" && -e $openrc_path ]] ; then
@@ -59,22 +59,19 @@ security_group_id=$(nova secgroup-list | grep default | awk '{print$2}')
 admin_internal_net=$(neutron net-list | grep admin_internal_net | awk '{print$2}')
 
 clear_data(){
-        nova floating-ip-disassociate $VM_id $floatingip
-        nova floating-ip-delete $floatingip
-        nova floating-ip-list
         nova delete $VM_id
-        nova delete $VM_temp_id
-        openstack keypair delete $keypair_name
         nova list
         openstack snapshot delete $snapshot_id
-        openstack volume delete $volume_id
+        openstack volume delete $volume_id_1
+        openstack volume delete $volume_id_2
 
 }
 
-volume_id=$(openstack volume create --image $image_name --size $volume_size --type $volume_type $volume_name | grep ' id ' | awk '{print $4}')
+#create volume from image
+volume_id_1=$(openstack volume create --image $image_name --size $volume_size --type $volume_type $volume_name | grep ' id ' | awk '{print $4}')
 for i in $(seq 1 $active_check_tries)
 do
-  result="$(openstack volume show $volume_id 2>&1)"
+  result="$(openstack volume show $volume_id_1 2>&1)"
   volume_status=$(echo "$result" | grep "^| *status" | awk '{printf $4}')
   [ "$volume_status" == "available" ] && break
   if [ "$volume_status" == "error" ]
@@ -88,13 +85,15 @@ done
 if ! [ "$volume_status" == "available" ]
 then
   echo "timeout waiting for volume to become available" "$result"
+  clear_data
   exit
 fi
 
-VM_temp_id=$(nova boot --boot-volume $volume_id --flavor $flavor_id --availability-zone nova --security-groups $security_group_id --nic net-id=$admin_internal_net $VM_name | grep ' id ' | awk '{print$4}' )
+#launch VM from volume
+VM_id=$(nova boot --boot-volume $volume_id_1 --flavor $flavor_id --availability-zone nova --security-groups $security_group_id --nic net-id=$admin_internal_net $VM_name | grep ' id ' | awk '{print$4}' )
 for i in $(seq 1 $active_check_tries)
 do
-  result="$(nova show $VM_temp_id 2>&1)"
+  result="$(nova show $VM_id 2>&1)"
   VM1_status=$(echo "$result" | grep "^| *status" | awk '{printf $4}')
   [ "$VM1_status" == "ACTIVE" ] && break
   if [ "$VM1_status" == "ERROR" ]
@@ -108,10 +107,12 @@ done
 if ! [ "$VM1_status" == "ACTIVE" ]
 then
   echo "timeout waiting for second VM to become active" "$result"
+  clear_data
   exit
 fi
 
-snapshot_id=$(openstack snapshot create --name $snapshot_name --force $volume_id | grep ' id ' | awk '{print $4}')
+echo "Create snapshot from volume"
+snapshot_id=$(openstack snapshot create --name $snapshot_name --force $volume_id_1 | grep ' id ' | awk '{print $4}')
 for i in $(seq 1 $active_check_tries)
 do
   result="$(openstack snapshot show $snapshot_id 2>&1)"
@@ -128,15 +129,15 @@ done
 if ! [ "$snapshot_status" == "available" ]
 then
   echo "timeout waiting for snapshot to become available" "$result"
+  clear_data
   exit
 fi
 
-#-------
 echo "Create volume from snapshot"
-volume_id=$(openstack volume create --snapshot $snapshot_id --size $volume_size --type $volume_type $volume_name | grep ' id ' | awk '{print $4}')
+volume_id_2=$(openstack volume create --snapshot $snapshot_id --size $volume_size --type $volume_type $volume_name | grep ' id ' | awk '{print $4}')
 for i in $(seq 1 $active_check_tries)
 do
-  result="$(openstack volume show $volume_id 2>&1)"
+  result="$(openstack volume show $volume_id_2 2>&1)"
   volume_status=$(echo "$result" | grep "^| *status" | awk '{printf $4}')
   [ "$volume_status" == "available" ] && break
   if [ "$volume_status" == "error" ]
@@ -150,54 +151,8 @@ done
 if ! [ "$volume_status" == "available" ]
 then
   echo "timeout waiting for volume to become available" "$result"
+  clear_data
   exit
 fi
 
-
-# create keypair
-keypair_name=$(cat /dev/urandom | tr -dc 'a-z' | fold -w 10 | head -n 1)
-result="$(nova keypair-add "$keypair_name" >"temporary-keypair" 2>&1)"
-chmod 600 "temporary-keypair"
-sleep 5
-
-VM_id=$(nova boot --snapshot $snapshot_id --flavor $flavor_id --availability-zone nova --security-groups $security_group_id --key-name $keypair_name --nic net-id=$admin_internal_net $VM_name | grep ' id ' | awk '{print$4}' )
-for i in $(seq 1 $active_check_tries)
-do
-  result="$(nova show $VM_id 2>&1)"
-  VM_status=$(echo "$result" | grep "^| *status" | awk '{printf $4}')
-  [ "$VM_status" == "ACTIVE" ] && break
-  if [ "$VM_status" == "ERROR" ]
-  then
-    echo "VM is in error state"
-    clear_data
-    exit 1
-  fi
-  [ $i -lt $active_check_tries ] && sleep $active_check_delay
-done
-if ! [ "$VM_status" == "ACTIVE" ]
-then
-  echo "timeout waiting for second VM to become active" "$result"
-  exit
-fi
-
-new_volume=$(nova show $VM_id | grep "os-extended-volumes:volumes_attached")
-new_volume_id=$(echo "$new_volume" | awk -F'"' '{print $4}')
-
-internalip=$(nova show $VM_id | grep admin_internal_net | awk '{print$5}')
-
-floatingip=$(neutron floatingip-create $floating_net | grep ' floating_ip_address ' | awk '{print$4}' )
-
-nova floating-ip-associate --fixed-address $internalip $VM_id $floatingip
-sleep 10
-
-nova show $VM_id
-
-ping $floatingip
-ssh_to_VM() {
-        sleep 5
-        ssh-keygen -R $floatingip
-        ssh -i "temporary-keypair" -o StrictHostKeyChecking=no $user@$floatingip hostname 2>&1
-}
-
-ssh_to_VM
 clear_data

@@ -126,6 +126,7 @@ do
     clear_data
     exit 1
   fi
+  [ "$VM_status" == "error" ] && echo "VM is in error state" && clear_data && break
   [ $i -lt $active_check_tries ] && sleep $active_check_delay
 done
 if ! [ "$VM_status" == "ACTIVE" ]
