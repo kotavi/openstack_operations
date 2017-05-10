@@ -5,7 +5,7 @@
 # check ssh
 
 
-#./boot_from_volume_ssh.sh -openrc=openrc -i=new_xenial -u=ubuntu -f=2 -v_s=2 -v_t=netapp -p tkorchak
+#./boot_from_volume_ssh.sh -openrc=openrc -i=new_xenial -u=ubuntu -f=2 -v_s=2 -v_t=netapp -p=tkorchak
 
 
 floating_net=admin_floating_net
@@ -114,7 +114,7 @@ ping $floatingip_1
 ssh-keygen -R $floatingip_1
 ssh -i "temporary-keypair" -o StrictHostKeyChecking=no $user@$floatingip_1 hostname 2>&1
 
-echo "Removing first VM"
+echo "Removing the first VM"
 nova floating-ip-disassociate $VM_id_1 $floatingip_1
 nova delete $VM_id_1
 nova floating-ip-delete $floatingip_1
@@ -148,7 +148,6 @@ then
   exit
 fi
 
-
 #ssh to the second VM
 internalip=$(nova show $VM_id_2 | grep admin_internal_net | awk '{print$5}')
 floatingip_2=$(neutron floatingip-create $floating_net | grep ' floating_ip_address ' | awk '{print$4}' )
@@ -157,4 +156,10 @@ sleep 10
 nova show $VM_id_2
 ping $floatingip_2
 ssh-keygen -R $floatingip_2
-ssh -i "temporary-keypair" -o StrictHostKeyChecking=no ConnectTimeout=10  $user@$floatingip_2 hostname 2>&1
+ssh -i "temporary-keypair" -o StrictHostKeyChecking=no $user@$floatingip_2 hostname 2>&1
+
+echo "Removing the second VM"
+nova floating-ip-disassociate $VM_id_2 $floatingip_2
+nova delete $VM_id_2
+nova floating-ip-delete $floatingip_2
+openstack keypair delete $keypair_name_2
