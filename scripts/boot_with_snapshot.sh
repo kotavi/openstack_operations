@@ -10,7 +10,7 @@
 #delete VM1, VM2
 
 
-#./boot_with_snapshot.sh -openrc=openrc -i=TestVM -u=cirros -f=2 -v_s=2 -v_t=netapp -p=tkorchak
+#./boot_with_snapshot.sh -openrc=openrc -i=TestVM -u=cirros -f=2 -p=tkorchak
 
 
 floating_net=admin_floating_net
