@@ -1,9 +1,12 @@
 #!/bin/bash -x
 
 #create volume from image
-#launch VM from volume
-# check ssh
-
+#launch VM1 from volume
+#check ssh
+#delete VM1
+#launch VM2
+#check ssh
+#delete VM2
 
 #./boot_from_volume_ssh.sh -openrc=openrc -i=new_xenial -u=ubuntu -f=2 -v_s=2 -v_t=netapp -p=tkorchak
 
