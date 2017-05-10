@@ -3,12 +3,10 @@
 #create volume from image
 #launch VM from volume
 # check ssh
-#delete VM
-#launch new VM from volume
-# check ssh
 
 
-#./boot_delete_VM.sh -openrc=openrc -i=new_xenial -u=ubuntu -f=2 -v_s=2 -v_t=netapp
+
+#./boot_from_volume_ssh.sh -openrc=openrc -i=new_xenial -u=ubuntu -f=2 -v_s=2 -v_t=netapp -p tkorchak
 
 
 floating_net=admin_floating_net
@@ -36,6 +34,9 @@ case $i in
     -v_t=*|--volume_type=*)
     volume_type="${i#*=}"
     ;;
+     -p=*|--pattern=*)
+    pattern="${i#*=}"
+    ;;
     *)
 
     ;;
@@ -51,20 +52,12 @@ else
 fi
 
 random=$(cat /dev/urandom | tr -dc 'a-z' | fold -w 10 | head -n 1)
-VM1_name=$random"_VM1"
+VM1_name=$pattern"_"$random"_VM1"
 VM2_name=$random"_VM2"
 volume_name=$random"_volume"
 
 security_group_id=$(nova secgroup-list | grep default | awk '{print$2}')
 admin_internal_net=$(neutron net-list | grep admin_internal_net | awk '{print$2}')
-
-clear_data(){
-        nova delete $VM_id_1
-        nova floating-ip-disassociate $VM_id_1 $floatingip_1
-        nova floating-ip-delete $floatingip_1
-        openstack keypair delete $keypair_name_1
-        openstack volume delete $volume_id
-}
 
 volume_id=$(openstack volume create --image $image_name --size $volume_size --type $volume_type $volume_name | grep ' id ' | awk '{print $4}')
 for i in $(seq 1 $active_check_tries)
@@ -75,7 +68,6 @@ do
   if [ "$volume_status" == "error" ]
   then
     echo "volume is in error state"
-    openstack volume delete $volume_id
     exit 1
   fi
   [ $i -lt $active_check_tries ] && sleep $active_check_delay
