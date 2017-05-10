@@ -94,6 +94,7 @@ nova floating-ip-associate --fixed-address $internalip $VM_id_1 $floatingip_1
 nova show $VM_id_1
 ping $floatingip_1
 ssh-keygen -R $floatingip_1
+#ssh -i "temporary-keypair" -o StrictHostKeyChecking=no -o ConnectTimeout=10 $user@$floatingip_1 echo `hostname` > file.dat 2>&1
 ssh -i "temporary-keypair" -o StrictHostKeyChecking=no $user@$floatingip_1 hostname 2>&1
 
 
