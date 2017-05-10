@@ -2,10 +2,10 @@
 
 #create volume from image
 #launch VM1 from volume
-#check ssh
+#check ping and ssh
 #delete VM1
 #launch VM2
-#check ssh
+#check ping and ssh
 #delete VM2
 
 #./boot_from_volume_ssh.sh -openrc=openrc -i=new_xenial -u=ubuntu -f=2 -v_s=2 -v_t=netapp -p=tkorchak
@@ -155,7 +155,7 @@ fi
 internalip=$(nova show $VM_id_2 | grep admin_internal_net | awk '{print$5}')
 floatingip_2=$(neutron floatingip-create $floating_net | grep ' floating_ip_address ' | awk '{print$4}' )
 nova floating-ip-associate --fixed-address $internalip $VM_id_2 $floatingip_2
-sleep 10
+sleep 5
 nova show $VM_id_2
 ping $floatingip_2
 ssh-keygen -R $floatingip_2
