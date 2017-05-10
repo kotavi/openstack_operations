@@ -5,7 +5,6 @@
 # check ssh
 
 
-
 #./boot_from_volume_ssh.sh -openrc=openrc -i=new_xenial -u=ubuntu -f=2 -v_s=2 -v_t=netapp -p tkorchak
 
 
@@ -53,8 +52,8 @@ fi
 
 random=$(cat /dev/urandom | tr -dc 'a-z' | fold -w 10 | head -n 1)
 VM1_name=$pattern"_"$random"_VM1"
-VM2_name=$random"_VM2"
-volume_name=$random"_volume"
+VM2_name=$pattern"_"$random"_VM2"
+volume_name=$pattern"_"$random"_volume"
 
 security_group_id=$(nova secgroup-list | grep default | awk '{print$2}')
 admin_internal_net=$(neutron net-list | grep admin_internal_net | awk '{print$2}')
@@ -79,7 +78,7 @@ then
 fi
 
 # create keypair
-keypair_name_1=$(cat /dev/urandom | tr -dc 'a-z' | fold -w 10 | head -n 1)
+keypair_name_1=$pattern"_"$(cat /dev/urandom | tr -dc 'a-z' | fold -w 10 | head -n 1)
 result="$(nova keypair-add "$keypair_name_1" >"temporary-keypair" 2>&1)"
 chmod 600 "temporary-keypair"
 sleep 5
@@ -109,7 +108,7 @@ fi
 internalip=$(nova show $VM_id_1 | grep admin_internal_net | awk '{print$5}')
 floatingip_1=$(neutron floatingip-create $floating_net | grep ' floating_ip_address ' | awk '{print$4}' )
 nova floating-ip-associate --fixed-address $internalip $VM_id_1 $floatingip_1
-sleep 10
+sleep 5
 nova show $VM_id_1
 ping $floatingip_1
 ssh-keygen -R $floatingip_1
@@ -123,7 +122,7 @@ openstack keypair delete $keypair_name_1
 
 
 # create keypair
-keypair_name_2=$(cat /dev/urandom | tr -dc 'a-z' | fold -w 10 | head -n 1)
+keypair_name_2=$pattern"_"$(cat /dev/urandom | tr -dc 'a-z' | fold -w 10 | head -n 1)
 result="$(nova keypair-add "$keypair_name_2" >"temporary-keypair" 2>&1)"
 chmod 600 "temporary-keypair"
 sleep 5
@@ -159,5 +158,3 @@ nova show $VM_id_2
 ping $floatingip_2
 ssh-keygen -R $floatingip_2
 ssh -i "temporary-keypair" -o StrictHostKeyChecking=no ConnectTimeout=10  $user@$floatingip_2 hostname 2>&1
-
-clear_data
