@@ -6,7 +6,7 @@
 image_name=$1
 image_link=$2
 
-wget -O $image_name image_link
+wget -O $image_name $image_link
 
 
 openstack image create --disk-format qcow2 --min-ram 1500 --file $image_name $image_name
