@@ -9,7 +9,7 @@
 
 #./3-boot-VM-from-image.sh -openrc=openrc -i=new_xenial -u=ubuntu -f=5
 
-source ./funcs.sh
+source ../funcs.sh
 
 for i in "$@"
 do

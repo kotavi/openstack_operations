@@ -10,7 +10,7 @@
 
 #./boot_from_volume_ssh.sh -openrc=openrc -i=new_xenial -u=ubuntu -f=2 -v_s=2 -v_t=netapp
 
-source ./funcs.sh
+source ../funcs.sh
 
 for i in "$@"
 do
