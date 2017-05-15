@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-source ./funcs.sh
+source ../funcs.sh
 
 
 VM_ids=$(nova list | grep $pattern | awk '{print $2}')
