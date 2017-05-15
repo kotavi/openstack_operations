@@ -1,5 +1,4 @@
 #!/bin/bash -x
-#!/bin/bash -x
 # for Linux OS only
 
 #create volume from image
