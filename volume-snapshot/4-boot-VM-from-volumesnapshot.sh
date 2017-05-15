@@ -9,7 +9,7 @@
 
 #./4-boot-VM-from-volumesnapshot.sh -openrc=openrc -i=TestVM -u=cirros -f=2 -v_s=2 -v_t=netapp
 
-source ./funcs.sh
+source ../funcs.sh
 
 for i in "$@"
 do
