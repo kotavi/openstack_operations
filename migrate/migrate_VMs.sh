@@ -1,6 +1,34 @@
 #!/bin/bash -x
 
-openrc_path=$1
+# get list of hypervisors
+# in the loop create VMs: one VM on each hypervisor
+# store VM_ids to array
+# execute 'nova resize' for each VM
+# check that VMs were resized
+# execute 'nova migrate' for each VM
+# check that each VM was migrated and its host changed
+#
+
+#./migrate_VMs.sh -openrc=openrc -f1=1 -f2=2
+
+source ../funcs.sh
+
+for i in "$@"
+do
+case $i in
+    -openrc=*)
+    openrc_path="${i#*=}"
+    ;;
+    -f1=*|--flavor_id=*)
+    flavor_id="${i#*=}"
+    ;;
+    -f2=*|--flavor_id_new=*)
+    flavor_id_new="${i#*=}"
+    ;;
+    *)
+    ;;
+esac
+done
 
 if [[ -n "$openrc_path" && -e $openrc_path ]] ; then
     source $openrc_path
@@ -8,9 +36,6 @@ else
     echo "Please provide correct path to openrc"
     exit 1
 fi
-
-flavor_id=1
-flavor_id_new=2
 
 #get list of hypervisors
 sorted_list=$(nova hypervisor-list | grep -v Hypervisor | awk '{print$4}' >> test.dat &&  sort -k2 -n test.dat && rm test.dat)
