@@ -12,7 +12,7 @@
 
 #./boot_with_snapshot.sh -openrc=openrc -i=TestVM -u=cirros -f=2
 
-source ./funcs.sh
+source ../funcs.sh
 
 for i in "$@"
 do
@@ -44,9 +44,8 @@ clear_data(){
     [ -n "$snapshot_id" ] && openstack snapshot delete $snapshot_id
     [ -n "$keypair_name_1" ] && openstack keypair delete $keypair_name_1
     [ -n "$keypair_name_2" ] && openstack keypair delete $keypair_name_2
+    [ -n "$new_volume_id" ] && openstack keypair delete $new_volume_id
 }
-
-
 
 if [[ -n "$openrc_path" && -e $openrc_path ]] ; then
     source $openrc_path
@@ -71,7 +70,7 @@ floatingip_1=`create_fip $VM_id_1`
 nova show $VM_id_1
 ping $floatingip_1
 ssh-keygen -R $floatingip_1
-ssh -i "temporary-keypair" -o StrictHostKeyChecking=no -o ConnectTimeout=10 $user@$floatingip_1 hostname 2>&1
+ssh -i "temporary-keypair" -o StrictHostKeyChecking=no -o ConnectTimeout=10 $user@$floatingip_1 'echo "hello" > text.dat | hostname' 2>&1
 
 snapshot_id=$(nova image-create $VM_id_1 $snapshot_name | grep ' id ' | awk '{print $4}')
 snapshot_status $snapshot_id
@@ -84,7 +83,7 @@ floatingip_2=`create_fip $VM_id_2`
 nova show $VM_id_2
 ping $floatingip_2
 ssh-keygen -R $floatingip_2
-ssh -i "temporary-keypair" -o StrictHostKeyChecking=no -o ConnectTimeout=10 $user@$floatingip_2 hostname 2>&1
+ssh -i "temporary-keypair" -o StrictHostKeyChecking=no -o ConnectTimeout=10 $user@$floatingip_2 'cat text.dat | hostname' 2>&1
 
 new_volume_id=`get_volume_attached_id $VM2_name`
 
