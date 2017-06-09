@@ -77,7 +77,7 @@ keypair_name=`create_keypair`
 VM_id=$(nova boot --snapshot $snapshot_id --flavor $flavor_id --availability-zone nova --security-groups $security_group_id --key-name $keypair_name --nic net-id=$admin_internal_net $VM_name | grep ' id ' | awk '{print$4}' )
 VM_status $VM_id
 
-new_volume=`get_volume_attached_id $VM_id`
+new_volume_id=`get_volume_attached_id $VM_id`
 
 floatingip=`create_fip $VM_id`
 sleep 5
