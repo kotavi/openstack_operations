@@ -1,7 +1,8 @@
 #!/bin/bash -x
 
 
-floating_net=admin_floating_net
+floating_net=floating_net
+internal_net=fixed
 active_check_tries=20
 active_check_delay=10
 pattern=tkorchak
@@ -92,7 +93,7 @@ function create_keypair {
 
 create_fip(){
     # $1 - VM id
-    internalip=$(nova show $1 | grep admin_internal_net | awk '{print$5}')
+    internalip=$(nova show $1 | grep $internal_net | awk '{print$5}')
     floatingip=$(neutron floatingip-create $floating_net | grep ' floating_ip_address ' | awk '{print$4}' )
     nova floating-ip-associate --fixed-address $internalip $1 $floatingip
     echo $floatingip >&1
